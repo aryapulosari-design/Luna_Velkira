@@ -1,0 +1,579 @@
+﻿Luma Support
+PRD dan Blueprint Operasional
+Aplikasi layanan pelanggan untuk toko online
+Versi 2.0  |  28 Oktober 2026  |  Pemilik produk VELKIRA
+Tujuan dan keputusan produk
+Luma Support dirancang sebagai aplikasi kerja yang dapat digunakan petugas toko online untuk mencatat pertanyaan, mengelola keluhan, membagi tanggung jawab, dan memantau penyelesaian. Data disimpan di database, akses memerlukan login, dan setiap perubahan penting tercatat dalam riwayat.
+Dokumen ini menetapkan kebutuhan sebelum pengembangan. Lingkupnya meliputi PRD, arsitektur server, database relasional, kontrak API, desain antarmuka, aturan proyek dan rencana implementasi. Checklist dipakai untuk mengarahkan pengerjaan; target kualitas masih harus dibuktikan melalui pengujian.
+Cakupan rilis pertama
+Rilis pertama dipakai satu toko dengan beberapa petugas. Petugas memasukkan permintaan yang diterima dari WhatsApp, marketplace, email, atau telepon. Aplikasi mengelola catatan, pemilik tiket, prioritas, catatan tindak lanjut dan status. Jawaban FAQ membantu petugas menyiapkan balasan berdasarkan kebijakan toko.
+Koneksi WhatsApp dan marketplace tidak dianggap otomatis tersedia. Petugas tetap membalas melalui kanal asal sampai integrasi resmi diaktifkan pada fase berikutnya. Sistem tidak mengaku mengecek ekspedisi, mengirim pesan, atau memutuskan refund tanpa proses yang benar-benar terhubung.
+Prinsip operasional
+Data tetap tersedia setelah refresh, logout dan pergantian perangkat bagi pengguna yang berhak.
+Statistik, daftar tiket dan riwayat berasal dari database dengan definisi metrik yang jelas.
+Tidak ada tombol reset massal pada aplikasi produksi.
+Akses publik portfolio hanya memperlihatkan studi kasus atau gambar yang telah disanitasi; workspace pelanggan memerlukan login.
+Keputusan yang perlu dikunci sebelum rilis
+Pemilik toko menetapkan kebijakan FAQ, jenis keluhan, target respons, aturan retensi, domain aplikasi serta akun hosting dan database. Rekomendasi arsitektur di dokumen ini menjadi dasar pengerjaan; biaya layanan diperiksa saat pengadaan.
+Tahap 1 PRD dan KPI
+Executive summary
+Permintaan pelanggan sering tersebar di beberapa kanal. Tanpa catatan bersama, petugas kesulitan melihat masalah yang belum selesai, siapa penanggung jawabnya, dan tindakan terakhir. Luma memusatkan pekerjaan tersebut dalam tiket yang dapat dilacak.
+Produk ditujukan untuk berbagai kategori toko online, termasuk pakaian, makanan kemasan, elektronik dan kebutuhan rumah. Pencatatan berfokus pada layanan pelanggan; pengelolaan penjualan, stok dan akuntansi tetap berada pada sistem toko masing-masing.
+Tujuan bisnis
+Mengurangi tiket yang terlupakan dengan antrean dan penanggung jawab yang jelas.
+Mempercepat pencarian konteks pelanggan serta riwayat penanganan.
+Menjaga jawaban kebijakan toko konsisten melalui FAQ yang disetujui admin.
+KPI
+Target awal usulan
+Definisi pengukuran
+Kelengkapan tiket
+Minimal 95 persen tiket baru lengkap.
+Pelanggan, kategori, ringkasan dan kanal terisi; hitung dari tiket yang dibuat pada periode laporan.
+Kepemilikan tiket
+Minimal 95 persen tiket terbuka diambil dalam target toko.
+Jeda created_at hingga assignment pertama; target waktunya ditentukan pemilik.
+Respons awal
+Turun 20 persen dari baseline.
+Bandingkan median waktu penerimaan ke respons manusia yang dicatat; bukan waktu respons otomatis.
+Kemudahan petugas
+4 dari 5 petugas uji menyelesaikan alur tanpa bantuan.
+Buat tiket, ambil, catat tindak lanjut dan selesaikan.
+Keandalan
+Tidak ada tiket hilang atau duplikat pada skenario uji kritis.
+Uji timeout, retry, klik ganda dan dua petugas bersamaan.
+
+Target merupakan usulan awal dan perlu dikalibrasi setelah baseline tersedia. Respons yang tidak terekam di aplikasi tidak dihitung sebagai respons terukur. Jangan mengisi dashboard dengan angka tetap atau klaim penghematan yang belum terbukti.
+Keberhasilan rilis
+Petugas dapat masuk dengan akun sendiri, membuat dan menemukan kembali tiket, melihat pemilik dan riwayat, lalu menutup tiket dengan alasan yang jelas. Akses ilegal ditolak dan perubahan tersimpan secara konsisten.
+Tahap 1 Pengguna dan alur operasional
+Persona dan pembagian tanggung jawab
+Peran
+Kebutuhan
+Batas tindakan
+Admin toko
+Melihat seluruh antrean, mengundang petugas, mengatur FAQ dan membagi tiket.
+Tidak dapat menghapus riwayat secara diam-diam; perubahan role harus diaudit.
+Petugas layanan
+Mencatat keluhan, mengambil tiket dan memberi tindak lanjut.
+Mengubah tiket miliknya; claim tiket tanpa pemilik secara atomik.
+Pelanggan
+Mendapat jawaban dan tindak lanjut melalui kanal asal.
+Tidak memiliki akun portal pada MVP; tidak melihat catatan internal.
+
+Alur masuk sampai penyelesaian
+Pelanggan menghubungi toko melalui kanal yang digunakan. Petugas login, mencari pelanggan dan nomor pesanan, lalu mengecek apakah masalah yang sama sudah memiliki tiket terbuka. Jika belum, petugas membuat tiket dengan ringkasan, kategori, prioritas dan kanal asal.
+Petugas mengambil tiket atau admin menugaskannya. Status berubah dari Baru ke Ditangani. Petugas membaca FAQ bila relevan, mencatat tindakan, lalu membalas melalui kanal asal. Jika menunggu informasi pelanggan, status menjadi Menunggu Pelanggan. Jika perlu keputusan khusus, tiket dieskalasikan kepada admin.
+Setelah masalah ditangani, petugas menulis ringkasan penyelesaian dan menandai Selesai. Jika pelanggan melapor bahwa masalah belum selesai, tiket dapat dibuka kembali dengan alasan; riwayat sebelumnya tetap utuh.
+Contoh tiket yang realistis
+Pelanggan Bima menghubungi toko terkait pesanan ORD 2402 yang belum sampai. Tiket mencatat waktu penerimaan, kanal WhatsApp, kategori pengiriman, prioritas normal, ringkasan keluhan dan referensi pesanan. Petugas yang mengambil tiket dicatat sebagai penanggung jawab.
+Petugas memeriksa status pada sistem pengiriman yang digunakan toko, lalu mencatat hasil pemeriksaan serta pembaruan yang disampaikan kepada pelanggan. Pencatatan tindakan nyata dibedakan dari rencana yang belum dilakukan.
+FAQ dan eskalasi
+FAQ berisi kebijakan yang sudah diterbitkan admin. Petugas mencari dan menyalin jawaban; aplikasi mencatat penggunaan FAQ jika dipakai pada tiket. Jawaban ambigu tetap ditinjau manusia. Penggantian barang, refund dan janji kompensasi memerlukan keputusan sesuai kebijakan toko.
+Tahap 1 MVP dan sitemap
+Fitur wajib
+Kriteria penerimaan
+Login dan role
+Hanya akun undangan aktif yang dapat masuk; admin dan petugas dibedakan di server.
+Pelanggan
+Cari dan tambah nama serta referensi kontak seperlunya; hindari duplikasi yang terdeteksi.
+Tiket persisten
+Buat, cari, filter dan buka detail; data tersedia kembali setelah refresh.
+Assignment
+Hanya satu petugas menjadi owner aktif; dua claim bersamaan menghasilkan satu pemenang.
+Catatan dan status
+Catatan tersimpan; penutupan memerlukan owner serta ringkasan penyelesaian.
+Riwayat
+Pembuatan, assignment, catatan, eskalasi, status dan pembukaan kembali tercatat.
+FAQ
+Admin menerbitkan/mengarsipkan; petugas mencari serta memakai jawaban yang diterbitkan.
+Ringkasan
+Jumlah tiket menurut status, prioritas dan owner dihitung dari data yang dapat diakses.
+Operasional
+Backup, pemulihan, log error, monitoring dan panduan penggunaan disiapkan.
+
+Fase berikutnya
+Integrasi resmi WhatsApp atau marketplace, lampiran bukti, notifikasi, aturan SLA, auto-routing, laporan lanjutan dan AI dapat ditambahkan setelah alur inti stabil. Multi-toko dalam satu aplikasi merupakan fase tersendiri; rilis pertama satu toko per instalasi agar kontrol akses sederhana.
+Sitemap
+/login dan /reset-password untuk autentikasi. /dashboard untuk ringkasan. /tickets untuk pencarian dan antrean; /tickets/new untuk pencatatan; /tickets/[id] untuk detail, catatan dan riwayat. /customers untuk pelanggan. /faq untuk pencarian pengetahuan. /settings/team dan /settings/faq hanya dapat diakses admin.
+Batas sistem
+MVP tidak mengurangi stok, menerima pembayaran, melakukan refund atau mengubah pesanan marketplace. Nomor pesanan merupakan referensi. Tidak ada pesan yang dikirim otomatis sampai integrasi channel benar-benar terpasang dan diuji.
+Tahap 1 Kegagalan dan kualitas operasional
+Skenario
+Respons yang diwajibkan
+Koneksi putus saat simpan
+Jangan tampilkan sukses. Pertahankan draft; retry memakai request ID yang sama.
+Timeout dengan hasil tidak pasti
+Cari ulang hasil melalui request ID sebelum membuat catatan baru.
+Dua petugas mengambil tiket
+Update bersyarat hanya mengizinkan satu owner; petugas lain mendapat konflik dan data terbaru.
+Data berubah di perangkat lain
+Version mismatch menolak overwrite dan meminta pengguna memuat ulang.
+Catatan atau field salah
+Error per field, isi tetap tersedia, fokus diarahkan ke kesalahan pertama.
+Session berakhir
+Minta login ulang; jangan mengirim perubahan dengan sesi tidak valid.
+Petugas dinonaktifkan
+Akses ditolak; tiket aktif dipindahkan oleh admin dengan riwayat.
+FAQ tidak cocok
+Jangan memberi jawaban pasti; petugas menangani atau eskalasi.
+Tiket selesai bermasalah lagi
+Buka kembali dengan alasan; jangan menghapus catatan penyelesaian.
+Database tidak tersedia
+Tampilkan gangguan layanan, tanpa angka dashboard palsu atau penutupan lokal.
+
+Standar performa dan aksesibilitas
+Target awal beban: sampai 10 petugas serentak dan 10.000 tiket sebagai asumsi pengujian. Gunakan pagination 25 item, maksimal 100. Target p95 API baca 800 ms dan tulis 1.500 ms pada lingkungan uji yang dicatat, di luar gangguan provider. Kalibrasi target setelah pola penggunaan diketahui.
+Antarmuka mobile dan desktop mendukung keyboard, fokus terlihat, label form, status berteks, kontras normal minimal 4,5 banding 1, dan target sentuh utama sekitar 44 px. Area kerja memakai noindex; halaman portfolio publik tidak memuat data pelanggan.
+Keamanan dan pemulihan
+Semua akses memakai HTTPS, validasi server, role dan pemeriksaan record. Data pribadi dibatasi sesuai kebutuhan. Tetapkan retensi dan prosedur penghapusan bersama pemilik toko. Target pemulihan awal: RPO 24 jam dan RTO 8 jam, dengan backup yang benar-benar tersedia serta uji restore; jangan menjanjikannya sebelum diverifikasi.
+Tahap 2 Arsitektur dan deployment
+Lapisan
+Rekomendasi
+Alasan
+Frontend
+Next.js App Router dan React.
+Mengikuti teknologi proyek; server menangani sesi dan data.
+Styling
+CSS Modules dengan token desain.
+Konsisten tanpa dependensi styling baru.
+Backend
+Route Handlers sebagai lapisan API.
+Validasi, izin dan aturan bisnis berada di server.
+Database
+PostgreSQL terkelola melalui Supabase.
+Relasi, transaksi, indeks dan kebijakan akses.
+Autentikasi
+Supabase Auth dengan akun undangan.
+Session dan pemulihan akun dikelola layanan auth.
+Hosting
+Runtime Next.js seperti Vercel atau host Node yang sesuai.
+API dan session tidak dapat dijalankan sebagai ekspor statis saja.
+Email
+SMTP transaksional untuk undangan dan pemulihan akun.
+Pilih penyedia serta verifikasi domain pengirim sebelum rilis.
+
+Pemisahan dari website agency
+Website VELKIRA dapat tetap memakai static export. Aplikasi operasional Luma dibuat sebagai proyek server terpisah agar data privat, session dan API tidak tercampur dengan portfolio publik. Alamat support.velkira.site merupakan usulan subdomain; domain dan hosting ditetapkan saat persiapan rilis.
+Alur request
+Browser mengirim request terautentikasi ke API. Server memverifikasi session, status akun dan role, memvalidasi body, lalu menjalankan transaksi database. Respons sukses dikirim setelah commit. Statistik dibaca dari query yang terotorisasi, bukan dari perkiraan state frontend.
+State dan caching
+Database adalah sumber kebenaran. State browser hanya menyimpan filter, pagination dan draft. Setelah mutasi berhasil, muat ulang data terkait. Jangan cache bersama respons autentikasi, pelanggan atau tiket; gunakan private no-store pada endpoint privat. Aset berversi boleh di-cache. Jangan menyimpan token auth atau data pelanggan di URL.
+Batas biaya
+Anggaran mencakup hosting server, database, backup, SMTP dan monitoring. Integrasi channel atau AI memiliki biaya terpisah. Tidak menetapkan harga layanan dalam PRD; periksa kuota, lokasi data dan paket yang dipilih sebelum pembelian.
+Tahap 2 Struktur dan konfigurasi
+luma-support/
+  app/
+    (auth)/login/              Login dan pemulihan
+    (workspace)/dashboard/     Ringkasan privat
+    (workspace)/tickets/       Antrean dan detail tiket
+    (workspace)/customers/     Catatan pelanggan
+    (workspace)/faq/           Pencarian kebijakan
+    api/v1/                   Endpoint terautentikasi
+  components/                 UI dan form
+  lib/auth/                   Session dan izin
+  lib/db/                     Client database dan transaksi
+  lib/validation/             Skema input server
+  supabase/migrations/        DDL dan access policies
+  tests/                      Unit integrasi dan E2E
+  docs/                       Blueprint dan runbook
+Environment variables
+Nama
+Sifat
+Penggunaan
+NEXT_PUBLIC_SUPABASE_URL
+Publik
+URL proyek Supabase.
+NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY
+Publik terbatas
+Inisialisasi client sesuai SDK; bukan pengganti access policy.
+SUPABASE_SECRET_KEY
+Secret server
+Operasi admin auth seperti undangan; tidak untuk request CRUD biasa.
+DATABASE_URL
+Secret CI atau server
+Migrasi atau koneksi DB jika driver SQL dipakai.
+APP_URL
+Konfigurasi
+Origin aplikasi untuk callback auth; berbeda per lingkungan.
+SMTP dan monitoring
+Sesuai provider
+Atur melalui konfigurasi layanan atau server; jangan ekspos kredensial.
+
+Session dan akses
+Gunakan panduan SSR Auth sesuai versi SDK yang dipasang. Server memverifikasi identitas untuk setiap API; jangan mempercayai role dari form atau localStorage. Profil berisi role dan status aktif yang hanya dapat diubah melalui jalur admin. Public signup dinonaktifkan. Akun admin pertama dibuat melalui proses bootstrap terkontrol.
+Key istimewa tidak dipakai untuk CRUD rutin karena dapat melewati RLS. Request biasa memakai identitas pengguna; mutasi melalui fungsi transaksi terotorisasi. Konfigurasi cookie, CSRF atau pemeriksaan origin mengikuti mekanisme session SDK yang dipilih dan diuji saat implementasi.
+Tahap 3 ERD dan kamus data
+Relasi inti: auth.users memiliki satu profiles. Customer memiliki banyak tickets. Profile dapat membuat atau menangani banyak tickets. Ticket memiliki banyak ticket_notes dan ticket_events. FAQ memiliki penulis dan status publikasi. Data tetap privat untuk tim toko yang terdaftar.
+Tabel
+Kolom dan tipe utama
+Relasi dan aturan
+profiles
+id uuid PK; display_name text; role text; is_active boolean; created_at timestamptz.
+id FK auth.users; role admin atau agent. Akun dinonaktifkan tanpa menghapus histori.
+customers
+id uuid PK; name text; contact_reference text nullable; created_by uuid; created_at timestamptz.
+created_by FK profiles. Referensi kontak seperlunya, bukan data pembayaran.
+tickets
+id uuid PK; number bigint unique; customer_id uuid; subject text; summary text; category text; channel text; order_reference text nullable; priority text; status text; assigned_to uuid nullable; created_by uuid; request_id uuid; request_hash char(64); version integer; received_at, first_response_at dan timestamps.
+customer FK customers; owner dan creator FK profiles. Owner wajib sebelum ditangani/selesai.
+ticket_notes
+id uuid PK; ticket_id uuid; author_id uuid; body text; kind text; sent_at timestamptz nullable; request_id uuid; request_hash char(64); created_at timestamptz.
+FK ticket dan profiles. Append only; kind internal, response atau resolution.
+ticket_events
+id bigint PK; ticket_id uuid; actor_id uuid; event_type text; details jsonb; created_at timestamptz.
+FK ticket dan profiles. Ditulis server bersama mutasi; bukan payload log bebas.
+faqs
+id uuid PK; question text; answer text; is_published boolean; updated_by uuid; updated_at timestamptz.
+updated_by FK profiles. Agent hanya membaca yang diterbitkan.
+
+Indeks dan pencarian
+Indeks tiket pada status, priority dan created_at; assigned_to, status dan created_at; customer_id; serta order_reference untuk pencarian referensi pesanan. Notes dan events diurutkan melalui indeks ticket_id, created_at. PK dan unique sudah memiliki indeks; hindari duplikasi. Mulai dari pencarian terstruktur, lalu tambahkan full text bila kebutuhan dan hasil query mendukung.
+Batas DDL
+Lampiran SQL menetapkan tipe, PK, FK dan constraint struktur. Sebelum produksi, migrasi wajib dilengkapi RLS policies, grant minimum dan fungsi transaksi untuk assignment, status, idempotency serta audit. DDL struktur saja bukan bukti database aman atau aplikasi siap rilis.
+Tahap 3 Status dan integritas transaksi
+Status
+Arti
+Transisi sah
+new
+Tiket masuk dan belum ditangani.
+In progress setelah owner ditetapkan; escalated jika butuh keputusan admin.
+in_progress
+Petugas sedang menangani.
+Waiting customer, escalated atau resolved.
+waiting_customer
+Menunggu jawaban pelanggan.
+In progress saat jawaban diterima; resolved setelah kebijakan penyelesaian dipenuhi.
+escalated
+Perlu penanganan atau keputusan admin.
+Admin menugaskan atau mengambil tiket lalu in progress.
+resolved
+Masalah telah ditutup dengan ringkasan penyelesaian.
+Reopen dengan alasan menghasilkan in progress atau escalated, disertai riwayat.
+
+Aturan penyelesaian dan riwayat
+Penutupan memerlukan owner aktif dan catatan resolution berisi tindakan serta hasil yang benar-benar dilakukan. Catatan internal tidak otomatis dikirim kepada pelanggan. Petugas mencatat balasan yang sudah dikirim pada kanal asal sebagai note jenis response dengan sent_at. Server memvalidasi received_at dan sent_at, lalu menetapkan first_response_at dari balasan pertama untuk KPI; waktu tidak boleh mendahului penerimaan atau berada di masa depan. Reopen menyimpan alasan, actor dan status sebelumnya; catatan lama tidak dihapus. Admin dapat memindahkan owner dengan alasan saat petugas tidak aktif.
+Transaksi atomik
+Assignment, perubahan status, versi dan event harus terjadi dalam satu transaksi. Claim memeriksa owner kosong dan versi terbaru. Update data memakai version yang dikirim pengguna; bila sudah berubah, server mengembalikan 409. Kegagalan penulisan event harus membatalkan perubahan tiket.
+Pembuatan tiket dan catatan memakai request_id dari client. Database memiliki unique per actor dan request ID, serta request_hash SHA 256 dari payload awal yang dinormalisasi server; hash tidak diubah saat data tiket diperbarui. Retry dengan ID serta payload sama mengembalikan hasil sebelumnya; ID sama dengan payload berbeda ditolak sebagai konflik. Setelah timeout, client mencari hasil request sebelum mengulangi operasi.
+Akses database
+Aktifkan RLS pada seluruh tabel yang terekspos. Pengguna anonim tidak memiliki akses. Petugas aktif dapat membaca workspace, claim tiket kosong, dan memutasi tiket miliknya; admin menangani seluruh tiket serta pengaturan tim/FAQ. Semua mutasi melalui fungsi transaksi terotorisasi; akses tulis langsung ke tabel dicabut. Policies dan fungsi wajib diuji terhadap role, akun nonaktif serta upaya mengganti actor_id.
+Retensi dan penghapusan
+Tidak ada tombol hapus permanen tiket pada MVP. Penonaktifan akun dan pengarsipan FAQ menjaga histori. Retensi kontak, anonimisasi dan permintaan penghapusan diatur pemilik sesuai kebutuhan serta kewajiban yang berlaku; jangan mengklaim kepatuhan hanya dari desain ini.
+Tahap 3 Kontrak API
+Base path /api/v1. Semua route memerlukan session valid kecuali alur auth yang dikelola provider. JSON UTF-8, timestamp ISO 8601 UTC, UUID sebagai string. ID bigint dan nomor tiket dikirim sebagai string. Daftar memakai cursor dan limit 25, maksimal 100; filter divalidasi server.
+Method dan route
+Akses
+Hasil
+GET /tickets
+Petugas aktif
+Daftar sesuai filter status, owner, prioritas, customer dan order.
+POST /tickets
+Petugas aktif
+201 tiket; request_id mencegah duplikasi retry.
+GET /tickets/{id}
+Petugas aktif
+Detail tiket, notes dan events terpaginasikan.
+PUT /tickets/{id}
+Owner atau admin
+200 pembaruan field yang diizinkan dengan version.
+POST /tickets/{id}/claim
+Petugas aktif
+200 owner terpasang atomik; 409 jika sudah diambil.
+POST /tickets/{id}/assign
+Admin
+200 penugasan atau pemindahan dengan alasan.
+POST /tickets/{id}/notes
+Owner atau admin
+201 catatan internal dengan request_id.
+POST /tickets/{id}/responses
+Owner atau admin
+201 pencatatan balasan yang sudah dikirim melalui kanal asal.
+POST /tickets/{id}/status
+Owner atau admin
+200 transisi sah; resolution/reopen memerlukan alasan.
+GET dan POST /customers
+Petugas aktif
+200 pencarian; 201 pencatatan pelanggan.
+GET /faqs dan GET /metrics
+Petugas aktif
+200 FAQ terbit atau metrik dari database.
+POST /faqs; PUT /faqs/{id}
+Admin
+POST /faqs membuat; PUT mengubah atau mengarsipkan.
+POST /team/invitations
+Admin
+Undang akun lewat auth provider; tidak menerima password petugas.
+
+DELETE tidak disediakan pada MVP untuk tiket, catatan atau riwayat. Kelola tim melalui endpoint admin terpisah untuk menonaktifkan akun; penonaktifan admin terakhir harus ditolak. Kebutuhan penghapusan data mengikuti prosedur terotorisasi yang ditentukan sebelum rilis.
+Kode error
+400 untuk JSON atau query rusak; 401 untuk session tidak valid; 403 untuk hak akses atau akun nonaktif; 404 untuk resource yang tidak tersedia; 409 untuk version/assignment/request ID konflik; 422 untuk field atau transisi salah; 429 untuk pembatasan request; 500 untuk error internal; 503 saat dependensi tidak tersedia. Error tidak mengirim stack trace atau query SQL kepada pengguna.
+Tahap 3 Payload dan response API
+Membuat tiket
+POST /api/v1/tickets
+{
+  "request_id": "uuid-dari-client",
+  "customer_id": "uuid-pelanggan",
+  "subject": "Pesanan belum sampai",
+  "summary": "Estimasi terlewati dan perlu pemeriksaan",
+  "category": "shipping",
+  "channel": "whatsapp",
+  "order_reference": "ORD-2402",
+  "priority": "normal"
+}
+Server menetapkan creator dari session, status awal new, nomor tiket, version dan timestamps. Jangan menerima created_by, role atau actor_id dari browser. Subject 5–160 karakter; summary 5–4.000; channel dari daftar yang diizinkan; order reference maksimal 100. Tolak field tidak dikenal.
+Menutup tiket
+POST /api/v1/tickets/{id}/status
+{
+  "version": 4,
+  "status": "resolved",
+  "resolution": "Pelanggan menerima pembaruan dan masalah ditangani"
+}
+Catatan 5–4.000 karakter setelah trim. Endpoint resolution membuat note dan event serta memperbarui status dalam satu transaksi. Aktor harus owner aktif atau admin. Buka kembali menggunakan status in_progress serta reason; untuk operasi lain, validasi field yang memang diizinkan.
+Response sukses dan error
+201 {"data":{"id":"uuid","number":"1042",
+"status":"new","version":1,"assigned_to":null}}
+
+422 {"error":{"code":"VALIDATION_ERROR",
+"message":"Periksa kembali data tiket",
+"fields":{"subject":"Minimal 5 karakter"},
+"request_id":"id-penelusuran-server"}}
+
+409 {"error":{"code":"VERSION_CONFLICT",
+"message":"Tiket telah diperbarui petugas lain",
+"current_version":5,"request_id":"id-penelusuran-server"}}
+List response memakai data array dan meta.next_cursor; detail memakai objek data. Token dan informasi sensitif tidak masuk response metrik. Request ID penelusuran server dibedakan dari idempotency request_id yang dikirim client.
+Tahap 4 Design system
+Desain menampilkan aplikasi kerja yang dapat digunakan setiap hari. Hilangkan skenario pilihan tetap, tombol jalankan simulasi, reset data dan statistik buatan. Gantikan dengan pencarian, filter, tombol buat tiket, antrean dan tindakan yang benar-benar tersimpan.
+Token
+HEX
+Penggunaan
+Primary dan hover
+345CFF / 2447D8
+Tombol utama, nav aktif dan link tindakan.
+Sidebar
+14213D
+Navigasi workspace.
+Background dan surface
+F4F6FA / FFFFFF
+Kanvas dan panel.
+Text dan muted
+172033 / 596579
+Teks utama dan sekunder.
+Border
+E2E7F0
+Pemisah dekoratif; input perlu batas yang cukup jelas.
+Success
+166534 / DCFCE7
+Status selesai.
+Waiting
+92400E / FEF3C7
+Menunggu pelanggan.
+Escalated dan error
+B42318 / FEE4E2
+Eskalasi atau validasi gagal.
+
+Typography dan layout
+Gunakan Manrope untuk heading serta body dengan fallback Arial. H1 28–36 px, H2 18–24 px, isi 14–16 px dan label 12–13 px. Data pelanggan, catatan dan tindakan utama tidak boleh menggunakan ukuran caption. Spacing 4, 8, 12, 16, 24 dan 32 px. Radius panel 14–16 px dan tombol 8–10 px; shadow tipis.
+Desktop dan mobile
+Desktop memakai sidebar, header, metrik, filter dan daftar tiket. Detail memiliki ringkasan pelanggan/pesanan, catatan, status, owner dan riwayat. Mobile memakai daftar lalu detail, dengan tindakan utama tetap mudah dijangkau. Jangan menempatkan semua kolom tabel sebagai teks kecil pada ponsel.
+State komponen
+Form menyediakan default, fokus, validasi, saving, sukses dan gagal. Tombol saving dinonaktifkan selama request tanpa menghilangkan konteks. Tampilkan skeleton hanya ketika data benar-benar dimuat, empty state saat hasil kosong dan retry saat request gagal. Gunakan konfirmasi untuk tindakan berisiko seperti menonaktifkan petugas; jangan meminta konfirmasi untuk setiap simpan catatan biasa.
+Tahap 4 Halaman dan aturan pengalaman
+Halaman
+Komponen dan perilaku
+Login
+Email/password, pemulihan akun, error generik dan redirect ke tujuan yang diizinkan.
+Dashboard
+Metrik dari database dengan periode/definisi; daftar pekerjaan milik pengguna.
+Daftar tiket
+Pencarian referensi, filter status/owner/prioritas, pagination, CTA buat tiket.
+Buat tiket
+Pilih/tambah pelanggan, subject, summary, kanal, order reference dan prioritas.
+Detail tiket
+Identitas, owner, status, catatan internal, tindakan, FAQ dan audit timeline.
+Pelanggan
+Pencarian, referensi kontak dan tiket terkait; hanya field yang diperlukan.
+FAQ
+Pertanyaan dan jawaban terbit; editor/publikasi hanya untuk admin.
+Tim
+Undangan, role, status aktif dan pemindahan tiket; tidak ada pengaturan dummy.
+
+Aturan data dan feedback
+Angka kosong ditampilkan sebagai nol hanya jika query berhasil. Request gagal menampilkan keadaan tidak tersedia, bukan nol. Setelah simpan, tampilkan hasil dari server. Catatan internal diberi label yang membedakannya dari balasan pelanggan. Bila belum ada integrasi pengiriman, jangan menampilkan tombol Kirim yang seolah mengirim pesan.
+Konflik dan pemulihan draft
+Jika versi tiket berubah, tampilkan pesan bahwa data telah diperbarui petugas lain. Pertahankan draft dalam komponen selama layar masih terbuka; minta pengguna memuat ulang data sebelum mengulang simpan. Jangan menimpa data secara diam-diam. Peringatkan saat meninggalkan form yang belum tersimpan, tanpa menyimpan data pribadi otomatis ke localStorage.
+Hubungan dengan portfolio
+Halaman publik VELKIRA menampilkan studi kasus, fitur dan gambar yang telah disanitasi. Workspace operasional tidak dibuka anonim untuk pengunjung portfolio. Jika kelak diperlukan akun evaluasi, sediakan lingkungan terpisah dengan data yang aman dan izin terbatas; jangan menghubungkannya ke database pelanggan produksi.
+Tahap 5 Project rules dan implementasi
+Aturan proyek
+Gunakan TypeScript strict pada proyek operasional baru dan validasi input di server.
+Akses ditolak secara default; verifikasi session, akun aktif dan role setiap request.
+Database adalah sumber kebenaran; jangan menampilkan sukses sebelum commit.
+Semua perubahan tiket penting harus memiliki actor dan audit event.
+Jangan mempercayai role, owner atau creator yang dikirim browser.
+Gunakan transaksi, version dan request ID untuk mencegah overwrite/duplikasi.
+Tidak ada seed pelanggan, password, API key atau data produksi di frontend.
+Baca panduan versi framework dan SDK sebelum coding; hindari API usang.
+Checklist tahap awal
+Tugas
+Output dan kriteria selesai
+Dependensi
+01 Belum dicentang
+Validasi kebijakan toko, role, status dan target respons.
+Pemilik toko
+02 Belum dicentang
+Proyek server terpisah, staging dan pengelolaan secrets.
+01
+03 Belum dicentang
+Migrasi struktur, RLS, grant dan transaksi; tes akses negatif.
+02
+04 Belum dicentang
+Auth undangan, session, akun aktif dan admin bootstrap.
+03
+05 Belum dicentang
+CRUD pelanggan minimum dan form tiket dengan validasi.
+03 dan 04
+06 Belum dicentang
+Assignment, version, notes, status, reopen dan audit atomik.
+05
+07 Belum dicentang
+Antrean, filter, pagination, dashboard dari database.
+06
+08 Belum dicentang
+Editor FAQ, publikasi, arsip dan pencarian petugas.
+04 dan 07
+
+Seluruh checklist adalah rencana sebelum implementasi. Tidak ada bagian dokumen yang menyatakan kode lama sudah memenuhi arsitektur operasional baru ini. Estimasi waktu disusun setelah akun layanan, konten dan kapasitas pengerjaan tersedia.
+Tahap 5 Pengujian rilis dan pemeliharaan
+Tugas
+Kriteria penerimaan
+09 Belum dicentang
+Uji UI desktop/mobile, keyboard, loading, error, konflik dan draft.
+10 Belum dicentang
+Uji dua petugas claim/update bersamaan, retry timeout dan double submit.
+11 Belum dicentang
+Uji role, akun nonaktif, IDOR, CSRF/origin, XSS, rate limit dan query aman.
+12 Belum dicentang
+Uji persistensi refresh/logout/perangkat lain serta pagination pada dataset uji.
+13 Belum dicentang
+Backup dan restore staging; ukur RPO/RTO yang benar-benar dapat dicapai.
+14 Belum dicentang
+Usability petugas, UAT pemilik dan perbaikan temuan kritis.
+15 Belum dicentang
+Deploy server, DB, HTTPS, domain, monitoring dan SMTP terverifikasi.
+16 Belum dicentang
+Serahkan runbook, akses pemilik, panduan restore dan rencana pemeliharaan.
+
+Definition of done
+Aplikasi operasional selesai ketika tiket tersimpan setelah refresh, otorisasi diterapkan, assignment atomik, catatan/resolution/audit konsisten, dan retry tidak menggandakan data. Pengujian peran dan akses ilegal wajib lulus. Temuan penting harus diperbaiki atau mendapat keputusan pemilik yang tercatat sebelum rilis.
+Monitoring dan rollback
+Pantau error API, kegagalan login, latensi dan koneksi database tanpa merekam isi keluhan atau kontak dalam log umum. Alert diarahkan kepada pengelola. Deploy dari commit teruji dan gunakan migrasi kompatibel. Rollback aplikasi tidak boleh menghapus transaksi pelanggan; pemulihan database dilakukan hanya melalui runbook yang telah diuji.
+Keputusan sebelum go live
+Konfirmasi akun layanan, biaya, kebijakan retensi, pemilik akses, prosedur eskalasi, target respons dan petugas penanggung jawab. Sediakan lingkungan staging terpisah. Integrasi WhatsApp atau marketplace baru dinyatakan aktif setelah kredensial, webhook, deduplikasi event, pengiriman serta recovery kegagalan lolos pengujian.
+Lampiran SQL struktur identitas dan tiket
+Spesifikasi PostgreSQL untuk Supabase. Jalankan hanya sebagai bagian migrasi yang sudah dilengkapi policies dan fungsi transaksi. Jangan memakai DDL ini sendirian untuk membuka akses produksi.
+CREATE TABLE profiles (
+  id uuid PRIMARY KEY REFERENCES auth.users(id),
+  display_name text NOT NULL CHECK (length(trim(display_name))>0),
+  role text NOT NULL CHECK (role IN ('admin','agent')),
+  is_active boolean NOT NULL DEFAULT true,
+  created_at timestamptz NOT NULL DEFAULT now()
+);
+CREATE TABLE customers (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  name text NOT NULL CHECK (length(trim(name)) BETWEEN 1 AND 160),
+  contact_reference text CHECK (length(contact_reference)<=255),
+  created_by uuid NOT NULL REFERENCES profiles(id),
+  created_at timestamptz NOT NULL DEFAULT now()
+);
+CREATE TABLE tickets (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  number bigint GENERATED ALWAYS AS IDENTITY UNIQUE,
+  customer_id uuid NOT NULL REFERENCES customers(id),
+  subject text NOT NULL CHECK (length(trim(subject)) BETWEEN 5 AND 160),
+  summary text NOT NULL CHECK (length(trim(summary)) BETWEEN 5 AND 4000),
+  category text NOT NULL CHECK (category IN
+    ('general','shipping','product','payment','return')),
+  channel text NOT NULL CHECK (channel IN
+    ('whatsapp','marketplace','email','phone','other')),
+  order_reference text CHECK (length(order_reference)<=100),
+  priority text NOT NULL CHECK (priority IN ('normal','high')),
+  status text NOT NULL DEFAULT 'new' CHECK (status IN
+    ('new','in_progress','waiting_customer','escalated','resolved')),
+  assigned_to uuid REFERENCES profiles(id),
+  created_by uuid NOT NULL REFERENCES profiles(id),
+  request_id uuid NOT NULL,
+  request_hash char(64) NOT NULL,
+  version integer NOT NULL DEFAULT 1 CHECK (version>0),
+  created_at timestamptz NOT NULL DEFAULT now(),
+  updated_at timestamptz NOT NULL DEFAULT now(),
+  received_at timestamptz NOT NULL DEFAULT now(),
+  first_response_at timestamptz,
+  resolved_at timestamptz,
+  UNIQUE (created_by,request_id),
+  CHECK (status NOT IN ('in_progress','waiting_customer','resolved')
+    OR assigned_to IS NOT NULL),
+  CHECK ((status='resolved') = (resolved_at IS NOT NULL))
+);
+Default FK membatasi penghapusan record yang masih dirujuk. Timestamp penyelesaian wajib dihapus saat reopen melalui fungsi transaksi; riwayat lama tetap tersimpan dalam events.
+Lampiran SQL catatan audit dan indeks
+CREATE TABLE ticket_notes (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  ticket_id uuid NOT NULL REFERENCES tickets(id),
+  author_id uuid NOT NULL REFERENCES profiles(id),
+  body text NOT NULL CHECK (length(trim(body)) BETWEEN 5 AND 4000),
+  kind text NOT NULL CHECK (kind IN ('internal','response','resolution')),
+  sent_at timestamptz,
+  request_id uuid NOT NULL,
+  request_hash char(64) NOT NULL,
+  created_at timestamptz NOT NULL DEFAULT now(),
+  CHECK ((kind='response') = (sent_at IS NOT NULL)),
+  UNIQUE (author_id,request_id)
+);
+CREATE TABLE ticket_events (
+  id bigint GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+  ticket_id uuid NOT NULL REFERENCES tickets(id),
+  actor_id uuid NOT NULL REFERENCES profiles(id),
+  event_type text NOT NULL,
+  details jsonb NOT NULL DEFAULT '{}'::jsonb,
+  created_at timestamptz NOT NULL DEFAULT now()
+);
+CREATE TABLE faqs (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  question text NOT NULL CHECK (length(trim(question)) BETWEEN 5 AND 300),
+  answer text NOT NULL CHECK (length(trim(answer)) BETWEEN 5 AND 4000),
+  is_published boolean NOT NULL DEFAULT false,
+  updated_by uuid NOT NULL REFERENCES profiles(id),
+  updated_at timestamptz NOT NULL DEFAULT now()
+);
+CREATE INDEX tickets_queue ON tickets(status,priority,created_at);
+CREATE INDEX tickets_owner ON tickets(assigned_to,status,created_at);
+CREATE INDEX tickets_customer ON tickets(customer_id);
+CREATE INDEX tickets_order ON tickets(order_reference)
+  WHERE order_reference IS NOT NULL;
+CREATE INDEX notes_history ON ticket_notes(ticket_id,created_at);
+CREATE INDEX events_history ON ticket_events(ticket_id,created_at);
+ALTER TABLE profiles ENABLE ROW LEVEL SECURITY;
+ALTER TABLE customers ENABLE ROW LEVEL SECURITY;
+ALTER TABLE tickets ENABLE ROW LEVEL SECURITY;
+ALTER TABLE ticket_notes ENABLE ROW LEVEL SECURITY;
+ALTER TABLE ticket_events ENABLE ROW LEVEL SECURITY;
+ALTER TABLE faqs ENABLE ROW LEVEL SECURITY;
+Policies dan grant harus menolak akses anonim, membatasi role serta menolak akun nonaktif. Fungsi transaksi memverifikasi actor dari session, resolution note, version, claim, request ID dan audit. Ketentuan lintas tabel ini tidak cukup diwakili CHECK biasa. Pengujian wajib membuktikan aturan tersebut, bukan hanya keberadaan RLS.
+Referensi dan keputusan akhir
+Referensi teknis
+Dokumentasi resmi berikut diperiksa pada 28 Oktober 2026 untuk dasar pemilihan arsitektur. Rekomendasi produk, target beban, SLA dan kebijakan operasional tetap merupakan rancangan proyek yang perlu dikonfirmasi melalui implementasi dan uji.
+Supabase Row Level Securityhttps://supabase.com/docs/guides/database/postgres/row-level-security
+Supabase Auth server side clientshttps://supabase.com/docs/guides/auth/server-side/creating-a-client
+Next.js self hostinghttps://nextjs.org/docs/app/guides/self-hosting
+Ringkasan keputusan
+Produk operasional satu toko dengan akun admin dan petugas.
+Data pelanggan dan tiket disimpan permanen sesuai retensi yang dipilih.
+Pencatatan kanal asal dilakukan petugas pada MVP; integrasi otomatis fase berikutnya.
+Dashboard berasal dari database dan semua penanganan memiliki riwayat.
+Proyek server dipisahkan dari website agency statis.
+RLS, otorisasi, transaksi, backup dan monitoring menjadi syarat rilis.
+Hal yang perlu disepakati pemilik
+Pilih toko pertama dan petugasnya, kategori serta prioritas, format referensi pesanan, kebijakan FAQ, target respons, aturan eskalasi, batas akses kontak, retensi dan penghapusan data, anggaran layanan serta alamat produksi. Keputusan tersebut dicatat sebelum kode integrasi atau migrasi produksi dijalankan.
+Status dokumen
+Dokumen ini adalah rancangan PRD dan blueprint untuk implementasi berikutnya. Belum menjadi bukti bahwa aplikasi memiliki database, autentikasi, API, koneksi pesan atau kesiapan produksi. Persetujuan isi dokumen menetapkan scope; setiap tahap pengerjaan tetap harus memenuhi kriteria penerimaan dan pengujiannya.
